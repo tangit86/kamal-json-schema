@@ -1,0 +1,170 @@
+service: "default-service"  # string
+image: "default-image"      # string
+
+labels:
+  default-label-key: "default-label-value"  # string
+
+volumes:
+  - "/path/on/host:/path/in/container:ro"  # string
+
+registry:
+  server: "default-registry-server"         # string
+  username: ["default-username"]            # array of strings
+  password: ["default-password"]            # array of strings
+
+servers:
+  web:
+    - "172.0.0.1"  # string
+    - "172.0.0.2"  # string
+  workers:
+    hosts:
+      - "172.0.0.3"  # string
+      - "172.0.0.4"  # string
+    traefik: true
+    cmd: "default-cmd"  # string
+    options:
+      memory: "1g"  # string
+      cpus: 2       # number
+    healthcheck:
+      cmd: "curl -f http://localhost"  # string
+      interval: "10s"                  # string
+      max_attempts: 3                  # integer
+      port: "80"                       # string
+      path: "/health"                  # string
+      cord: "/cord"                    # string
+      log_lines: 100                   # integer
+    logging:
+      driver: "json-file"  # string
+      options:
+        max-size: "100m"   # string
+    labels:
+      role-label-key: "role-label-value"  # string
+    env:
+      clear:
+        ROLE_ENV_VAR: "role-env-value"  # string
+      secret:
+        - "ROLE_SECRET_ENV_VAR"         # string
+    asset_path: "/default/path/to/assets"  # string
+
+env:
+  clear:
+    ENV_VAR: "env-value"  # string
+  secret:
+    - "SECRET_ENV_VAR"    # string
+  tags:
+    tag1:
+      MYSQL_USER: "monitoring"  # string
+    tag2:
+      clear:
+        MYSQL_USER: "readonly"  # string
+      secret:
+        - "MYSQL_PASSWORD"      # string
+
+asset_path: "/default/path/to/assets"  # string
+hooks_path: "/user_home/kamal/hooks"  # string
+
+require_destination: true  # boolean
+primary_role: "workers"     # string
+allow_empty_roles: false    # boolean
+stop_wait_time: 60          # integer
+retain_containers: 3        # integer
+minimum_version: "1.3.0"    # string
+readiness_delay: 4          # integer
+run_directory: "/etc/kamal" # string
+
+ssh:
+  user: "app"               # string
+  port: "2222"              # string
+  proxy: "root@proxy-host"  # string
+  proxy_command: "ssh -W %h:%p user@proxy"  # string
+  log_level: "debug"        # string
+  keys_only: false          # boolean
+  keys: ["~/.ssh/id.pem"]   # array of strings
+  key_data: ["-----BEGIN OPENSSH PRIVATE KEY-----"]  # array of strings
+
+builder:
+  multiarch: false          # boolean
+  local:
+    arch: "amd64"           # string
+    host: "/var/run/docker.sock"  # string
+  remote:
+    arch: "arm64"           # string
+    host: "ssh://docker@docker-builder"  # string
+  cache:
+    type: "registry"        # string
+    options: "mode=max"     # string
+    image: "kamal-app-build-cache"  # string
+  context: "."              # string
+  dockerfile: "Dockerfile.production"  # string
+  target: "production"      # string
+  args:
+    ENVIRONMENT: "production"  # string
+  secrets:
+    - "SECRET1"             # string
+    - "SECRET2"             # string
+  ssh: "default=$SSH_AUTH_SOCK"  # string
+
+accessories:
+  mysql:
+    service: "mysql"        # string
+    image: "mysql:8.0"      # string
+    host: "mysql-db1"       # string
+    hosts:
+      - "mysql-db1"         # string
+      - "mysql-db2"         # string
+    roles:
+      - "mysql"             # string
+    cmd: "bin/mysqld"       # string
+    port: "127.0.0.1:3306:3306"  # string
+    labels:
+      app: "myapp"          # string
+    options:
+      restart: "always"     # string
+      cpus: "2"             # string or array of strings
+    env:
+      clear:
+        ACCESSORY_ENV_VAR: "accessory-env-value"  # string
+    files:
+      - "config/my.cnf.erb:/etc/mysql/my.cnf"     # string
+      - "config/myoptions.cnf:/etc/mysql/myoptions.cnf"  # string
+    directories:
+      - "mysql-logs:/var/log/mysql"  # string
+    volumes:
+      - "/path/to/mysql-logs:/var/log/mysql"  # string
+
+traefik:
+  image: "traefik:v2.9"     # string
+  host_port: "8080"         # string or array of strings
+  publish: false            # boolean
+  labels:
+    traefik.http.routers.catchall.entryPoints: "http"  # string
+  args:
+    entryPoints.http.address: ":80"  # string or array of strings
+  options:
+    cpus: "2"              # string or array of strings
+  env:
+    clear:
+      TRAEFIK_ENV_VAR: "traefik-env-value"  # string
+
+sshkit:
+  max_concurrent_starts: 10  # integer
+  pool_idle_timeout: 300     # integer
+
+boot:
+  limit: "2"                # string or integer
+  wait: 10                  # integer
+
+healthcheck:
+  cmd: "curl -f http://localhost"  # string
+  interval: "10s"                  # string
+  max_attempts: 3                  # integer
+  port: "80"                       # string or array of strings
+  path: "/health"                  # string
+  cord: "/cord"                    # string
+  log_lines: 100                   # integer
+
+logging:
+  driver: "json-file"              # string
+  options:
+    max-size: "100m"               # string or array of strings
+

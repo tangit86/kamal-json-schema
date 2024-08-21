@@ -1,0 +1,547 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Kamal Configuration Schema",
+  "type": "object",
+  "properties": {
+    "service": {
+      "type": "string",
+      "description": "The service name. This is a required value and is used as the container name prefix."
+    },
+    "image": {
+      "type": "string",
+      "description": "The Docker image name. The image will be pushed to the configured registry."
+    },
+    "labels": {
+      "type": "object",
+      "description": "Additional labels to add to the container.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "volumes": {
+      "type": "array",
+      "description": "Additional volumes to mount into the container.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "registry": {
+      "type": "object",
+      "description": "The Docker registry configuration.",
+      "properties": {
+        "server": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "username": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "password": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "servers": {
+      "type": "object",
+      "description": "The servers to deploy to, optionally with custom roles.",
+      "patternProperties": {
+        ".*": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "hosts": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "traefik": { "type": "boolean" },
+                "cmd": { "type": "string" },
+                "options": {
+                  "type": "object",
+                  "properties": {
+                    "memory": { "type": "string" },
+                    "cpus": { "type": "number" }
+                  },
+                  "additionalProperties": false
+                },
+                "healthcheck": { "$ref": "#/definitions/healthcheck" },
+                "logging": { "$ref": "#/definitions/logging" },
+                "labels": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                },
+                "env": { "$ref": "#/definitions/env" },
+                "asset_path": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "env": {
+      "type": "object",
+      "description": "Environment variables configuration.",
+      "properties": {
+        "clear": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        },
+        "secret": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tags": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "properties": {
+                "clear": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "oneOf": [
+                      { "type": "string" },
+                      {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    ]
+                  }
+                },
+                "secret": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "asset_path": {
+      "type": "string",
+      "description": "Used for asset bridging across deployments. Specify an asset path to avoid 404s."
+    },
+    "hooks_path": {
+      "type": "string",
+      "description": "Path to hooks, defaults to `.kamal/hooks`."
+    },
+    "require_destination": {
+      "type": "boolean",
+      "description": "Whether deployments require a destination to be specified, defaults to `false`."
+    },
+    "primary_role": {
+      "type": "string",
+      "description": "The primary role, defaults to `web`."
+    },
+    "allow_empty_roles": {
+      "type": "boolean",
+      "description": "Whether roles with no servers are allowed, defaults to `false`."
+    },
+    "stop_wait_time": {
+      "type": "integer",
+      "description": "How long to wait for a container to stop before killing it, defaults to 30 seconds."
+    },
+    "retain_containers": {
+      "type": "integer",
+      "description": "How many old containers and images to retain, defaults to 5."
+    },
+    "minimum_version": {
+      "type": "string",
+      "description": "The minimum version of Kamal required to deploy this configuration, defaults to nil."
+    },
+    "readiness_delay": {
+      "type": "integer",
+      "description": "Seconds to wait for a container to boot after it's running, defaults to 7."
+    },
+    "run_directory": {
+      "type": "string",
+      "description": "Directory to store Kamal runtime files on the host, defaults to `.kamal`."
+    },
+    "ssh": {
+      "type": "object",
+      "description": "SSH options configuration.",
+      "properties": {
+        "user": { "type": "string" },
+        "port": { "type": "string" },
+        "proxy": { "type": "string" },
+        "proxy_command": { "type": "string" },
+        "log_level": { "type": "string" },
+        "keys_only": { "type": "boolean" },
+        "keys": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "key_data": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "builder": {
+      "type": "object",
+      "description": "Builder options configuration.",
+      "properties": {
+        "multiarch": { "type": "boolean" },
+        "local": {
+          "type": "object",
+          "properties": {
+            "arch": { "type": "string" },
+            "host": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "remote": {
+          "type": "object",
+          "properties": {
+            "arch": { "type": "string" },
+            "host": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "cache": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string" },
+            "options": { "type": "string" },
+            "image": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "context": { "type": "string" },
+        "dockerfile": { "type": "string" },
+        "target": { "type": "string" },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ssh": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "accessories": {
+      "type": "object",
+      "description": "Additional services to run in Docker.",
+      "patternProperties": {
+        ".*": {
+          "type": "object",
+          "properties": {
+            "service": { "type": "string" },
+            "image": { "type": "string" },
+            "host": {
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              ]
+            },
+            "hosts": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "roles": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "cmd": { "type": "string" },
+            "port": {
+              "oneOf": [
+                { "type": "string" },
+                {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "additionalProperties": { "type": "string" }
+            },
+            "options": {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  { "type": "string" },
+                  {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                ]
+              }
+            },
+            "env": { "$ref": "#/definitions/env" },
+            "files": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "directories": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "volumes": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "traefik": {
+      "type": "object",
+      "description": "The Traefik proxy configuration for zero-downtime deployments.",
+      "properties": {
+        "image": { "type": "string" },
+        "host_port": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "publish": { "type": "boolean" },
+        "labels": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "args": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        },
+        "env": { "$ref": "#/definitions/env" }
+      },
+      "additionalProperties": false
+    },
+    "sshkit": {
+      "type": "object",
+      "description": "SSHKit configuration.",
+      "properties": {
+        "max_concurrent_starts": { "type": "integer" },
+        "pool_idle_timeout": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "boot": {
+      "type": "object",
+      "description": "Boot options configuration.",
+      "properties": {
+        "limit": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "integer" }
+          ]
+        },
+        "wait": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "healthcheck": {
+      "type": "object",
+      "description": "Healthcheck commands, intervals, and timeouts configuration.",
+      "properties": {
+        "cmd": { "type": "string" },
+        "interval": { "type": "string" },
+        "max_attempts": { "type": "integer" },
+        "port": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "path": { "type": "string" },
+        "cord": { "type": "string" },
+        "log_lines": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "logging": {
+      "type": "object",
+      "description": "Docker logging configuration.",
+      "properties": {
+        "driver": { "type": "string" },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["service", "image"],
+  "additionalProperties": false,
+  "definitions": {
+    "env": {
+      "type": "object",
+      "properties": {
+        "clear": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        },
+        "secret": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tags": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "object",
+              "properties": {
+                "clear": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "oneOf": [
+                      { "type": "string" },
+                      {
+                        "type": "array",
+                        "items": { "type": "string" }
+                      }
+                    ]
+                  }
+                },
+                "secret": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "healthcheck": {
+      "type": "object",
+      "properties": {
+        "cmd": { "type": "string" },
+        "interval": { "type": "string" },
+        "max_attempts": { "type": "integer" },
+        "port": {
+          "oneOf": [
+            { "type": "string" },
+            {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          ]
+        },
+        "path": { "type": "string" },
+        "cord": { "type": "string" },
+        "log_lines": { "type": "integer" }
+      },
+      "additionalProperties": false
+    },
+    "logging": {
+      "type": "object",
+      "properties": {
+        "driver": { "type": "string" },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "string" },
+              {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
